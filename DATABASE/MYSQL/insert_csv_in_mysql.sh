@@ -92,16 +92,11 @@ CREATE TABLE IF NOT EXISTS Marketing (
 );
 EOF
 
-# Alter table character set and collation
-alter_table_charset "Catalogue"
-alter_table_charset "Clients_14"
-alter_table_charset "Clients_19"
-alter_table_charset "Immatriculations"
-alter_table_charset "Marketing"
-
 echo "Tables created in $MYSQL_DB"
 
-# Import CSV data into MariaDB tables
+mysql -h$MYSQL_HOST -e "USE $MYSQL_DB;"
+
+# Import CSV data into MySQL tables
 mysql --local-infile=1 -h$MYSQL_HOST $MYSQL_DB <<EOF
 LOAD DATA INFILE '$AUTHORIZED_PATH/Catalogue.csv'
 INTO TABLE Catalogue
@@ -155,6 +150,13 @@ SET taux = IF(@taux REGEXP '^[0-9]+$' = 0, NULL, @taux),
     nbEnfantsAcharge = IF(@nbEnfantsAcharge REGEXP '^[0-9]+$' = 0, NULL, @nbEnfantsAcharge);
 
 EOF
+
+# Alter table character set and collation
+alter_table_charset "Catalogue"
+alter_table_charset "Clients_14"
+alter_table_charset "Clients_19"
+alter_table_charset "Immatriculations"
+alter_table_charset "Marketing"
 
 # Remove files from authorised folder
 rm $AUTHORIZED_PATH/*
