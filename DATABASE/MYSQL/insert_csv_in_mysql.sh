@@ -5,7 +5,7 @@ MYSQL_HOST="localhost"
 MYSQL_DB="TPA"
 DATA_PATH="./../data"
 AUTHORIZED_PATH="/var/lib/mysql-files" #Only path authorised to load content
-echo "Start MariaDB setup and data insertion..."
+echo "Start MySQL setup and data insertion..."
 
 # Function to alter table character set and collation
 function alter_table_charset() {
@@ -21,6 +21,12 @@ iconv -f WINDOWS-1252 -t UTF-8 < "$DATA_PATH/Immatriculations.csv" > "$AUTHORIZE
 iconv -f WINDOWS-1252 -t UTF-8 < "$DATA_PATH/Marketing.csv" > "$AUTHORIZED_PATH/Marketing.csv"
 
 echo "new encodage done"
+
+# Drop the database if it exists
+mysql -h$MYSQL_HOST -e "DROP DATABASE IF EXISTS $MYSQL_DB;"
+
+# Create the database
+mysql -h$MYSQL_HOST -e "CREATE DATABASE $MYSQL_DB;"
 
 # Create database if it doesn't exist and clear tables
 mysql --local-infile=1 -h$MYSQL_HOST $MYSQL_DB <<EOF 
