@@ -25,9 +25,6 @@ echo "new encodage done"
 # Drop the database if it exists
 mysql -h$MYSQL_HOST -e "DROP DATABASE IF EXISTS $MYSQL_DB;"
 
-# Create the database
-mysql -h$MYSQL_HOST -e "CREATE DATABASE $MYSQL_DB;"
-
 # Create database if it doesn't exist and clear tables
 mysql --local-infile=1 -h$MYSQL_HOST $MYSQL_DB <<EOF 
 CREATE DATABASE IF NOT EXISTS $MYSQL_DB;
