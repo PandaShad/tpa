@@ -23,12 +23,12 @@ iconv -f WINDOWS-1252 -t UTF-8 < "$DATA_PATH/Marketing.csv" > "$AUTHORIZED_PATH/
 echo "new encodage done"
 
 # Drop the database if it exists
-# mysql -h$MYSQL_HOST -e "DROP DATABASE IF EXISTS $MYSQL_DB;"
+mysql -h$MYSQL_HOST -e "DROP DATABASE IF EXISTS $MYSQL_DB;"
 
 # Create database if it doesn't exist and clear tables
+mysql -h$MYSQL_HOST -e "CREATE DATABASE IF NOT EXISTS $MYSQL_DB;"
+
 mysql --local-infile=1 -h$MYSQL_HOST $MYSQL_DB <<EOF
-CREATE DATABASE IF NOT EXISTS $MYSQL_DB;
-USE $MYSQL_DB;
 DROP TABLE Catalogue;
 DROP TABLE Clients_14;
 DROP TABLE Clients_19;
