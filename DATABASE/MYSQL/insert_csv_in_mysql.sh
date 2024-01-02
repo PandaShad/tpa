@@ -26,8 +26,9 @@ echo "new encodage done"
 mysql -h$MYSQL_HOST -e "DROP DATABASE IF EXISTS $MYSQL_DB;"
 
 # Create database if it doesn't exist and clear tables
-mysql --local-infile=1 -h$MYSQL_HOST $MYSQL_DB <<EOF 
+mysql --local-infile=1 -h$MYSQL_HOST $MYSQL_DB <<EOF
 CREATE DATABASE IF NOT EXISTS $MYSQL_DB;
+USE $MYSQL_DB;
 DROP TABLE Catalogue;
 DROP TABLE Clients_14;
 DROP TABLE Clients_19;
@@ -90,8 +91,6 @@ CREATE TABLE IF NOT EXISTS Marketing (
 EOF
 
 echo "Tables created in $MYSQL_DB"
-
-mysql -h$MYSQL_HOST -e "USE $MYSQL_DB;"
 
 # Import CSV data into MySQL tables
 mysql --local-infile=1 -h$MYSQL_HOST $MYSQL_DB <<EOF
