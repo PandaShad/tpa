@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Visualization</title>
+    <!-- Intégration de Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Load d3.js v5 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.16.0/d3.min.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <style>
+        .tooltip2 {
+          background-color: black;
+          border: none;
+          border-radius: 5px;
+          padding: 15px;
+          min-width: 400px;
+          text-align: left;
+          color: white;
+          opacity: 0;
+          display: inline;
+          position: relative;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto py-8 px-4">
+        <ul class="flex border-b">
+            <li class="-mb-px mr-1">
+                <a class="bg-white inline-block py-2 px-4 font-semibold border-l border-t border-r rounded-t text-gray-700" href="#catalogue">Catalogue</a>
+            </li>
+            <li class="mr-1">
+                <a class="bg-white inline-block py-2 px-4 font-semibold text-gray-500" href="#clients">Clients</a>
+            </li>
+            <li class="mr-1">
+                <a class="bg-white inline-block py-2 px-4 font-semibold text-gray-500" href="#immatriculation">Immatruculation</a>
+            </li>
+        </ul>
+        <div class="bg-white rounded my-4 p-4">
+            <div id="catalogue" class="tab-content flex flex-col">
+                <h2 class="text-2xl font-semibold mb-4">Catalogue Visualisation</h2>
+                <div id="catalogue_container">
+                    <div class="flex flew-row">
+                        <div id="cars_by_brand" class="mr-4">
+                            <div id="tooltip" style="position: absolute; opacity: 0; background-color: #fff; padding: 5px; border: 1px solid #000; pointer-events: none;"></div>
+                        </div>
+                        <div id="boxplot" class="">
+                        </div>
+                        <div id="filterSelect"></div>
+                    <div id="filterPower"></div>
+                    </div>
+                </div>
+                <input type="file" id="csvFileInputCat" accept=".csv">
+            </div>
+            <div id="clients" class="hidden tab-content">
+                <!-- Contenu de l'onglet Clients -->
+                <h2 class="text-2xl font-semibold mb-4">Clients Visualisation</h2>
+                <div id="client_container">
+                    <div id="nuageVisu">
+                        <div id="filterAge"><p> Filtrer Age </p></div>
+                        <div id="filterTaux"><p> Filtrer Taux </p></div>
+                        <div id="filterSituation"></div>
+                    </div>
+                </div>  
+                <input type="file" id="csvFileInputCli" accept=".csv">
+            </div>
+            <div id="immatriculation" class="tab-content flex flex-col">
+                <h2 class="text-2xl font-semibold mb-4">Immatriculation Visualisation</h2>
+                <div id="immatriculation_container" class="flex flex-col items-center">
+                    <div class="flex flew-row">
+                        <div id="immatriculation_by_brand" class="mr-4">
+                        </div>
+                        <div id="immplot" class="">
+                        </div>
+                    </div>
+                    <div id="immatriculation_puissance" class="graph-container">
+                    </div>
+                </div>
+                <input type="file" id="csvFileInputImm" accept=".csv">
+            </div>
+        </div>
+        </div>
+    <!-- Include scripts directly in HTML -->
+    <script src="pie_catalogue.js"></script>
+    <script src="visualisation_clients.js"></script>
+    <script src="visualisation_immatriculation.js"></script>
+
+    <script>
+        // Script pour activer les onglets
+        document.addEventListener('DOMContentLoaded', function() {
+            let fileInputCat = document.getElementById('csvFileInputCat');
+            let fileInputCli = document.getElementById('csvFileInputCli');
+            let fileInputImm = document.getElementById('csvFileInputImm');
+
+
+            const tabs = document.querySelectorAll('a');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    const target = this.getAttribute('href');
+                    document.querySelectorAll('.tab-content').forEach(tabContent => {
+                        tabContent.classList.add('hidden');
+                    });
+                    document.querySelector(target).classList.remove('hidden');
+
+                    if (target === '#catalogue') {
+
+                        // Remove 'change' event listeners from fileInputCli
+                        const cloneCat = fileInputCat.cloneNode(true);
+                        fileInputCat.parentNode.replaceChild(cloneCat, fileInputCat);
+                        fileInputCat = cloneCat;
+
+                        fileInputCat.addEventListener('change', function(event) {
+                            const file = event.target.files[0];
+                            const reader = new FileReader();
+
+                            reader.onload = function(e) {
+                                const content = e.target.result;
+                                clearAndReplaceContent('catalogue_container', `
+                                    <div class="flex flew-row">
+                                        <div id="cars_by_brand" class="mr-4">
+                                            <div id="tooltip" style="position: absolute; opacity: 0; background-color: #fff; padding: 5px; border: 1px solid #000; pointer-events: none;"></div>
+                                        </div>
+                                        <div id="boxplot" class="">
+                                        </div>
+                                        <div id="filterSelect"></div>
+                                        <div id="filterPower"></div>
+                                    </div>
+                                `);
+                                visualizeCatalogueData(content);
+                            };
+
+                            reader.readAsText(file);
+                        });
+                    }
+
+                    if (target === '#clients') {
+                        // Remove 'change' event listeners from fileInputCli
+                        const cloneCli = fileInputCli.cloneNode(true);
+                        fileInputCli.parentNode.replaceChild(cloneCli, fileInputCli);
+                        fileInputCli = cloneCli;
+
+                        fileInputCli.addEventListener('change', function(event) {
+                            const file = event.target.files[0];
+                            const reader = new FileReader();
+
+                            reader.onload = function(e) {
+                                const content = e.target.result;
+                                clearAndReplaceContent('client_container', `
+                                    <div id="nuageVisu">
+                                        <div id="filterAge"><p> Filtrer Age </p></div>
+                                        <div id="filterTaux"><p> Filtrer Taux </p></div>
+                                        <div id="filterSituation"></div>
+                                    </div>
+                                `);
+                                visualizeClientsData(content);
+
+                            };
+
+                            reader.readAsText(file);
+                        });
+                    }
+
+                    // Nouvelle section pour l'onglet Immatriculation
+                    if (target === '#immatriculation') {
+                        // Remove 'change' event listeners from fileInputImm
+                        const cloneImm = fileInputImm.cloneNode(true);
+                        fileInputImm.parentNode.replaceChild(cloneImm, fileInputImm);
+                        fileInputImm = cloneImm;
+
+
+                        fileInputImm.addEventListener('change', function (event) {
+                            const file = event.target.files[0];
+                            const reader = new FileReader();
+
+                            reader.onload = function (e) {
+                                const content = e.target.result;
+                                clearAndReplaceContent('immatriculation_container', `
+                    <div id="filterOccasionNeuf" class="mb-4">
+                        <label for="occasionNeufFilter">Filtrer par état :</label>
+                        <select id="occasionNeufFilter" class="ml-2">
+                            <option value="all">Tous</option>
+                            <option value="occasion">Occasion</option>
+                            <option value="neuf">Neuf</option>
+                        </select>
+                    </div>
+                    <div class="flex flew-row">
+                        <div id="immatriculation_by_brand" class="mr-4">
+                        </div>
+                        <div id="immplot" class="">
+                        </div>
+                    </div>
+                    <div id="immatriculation_puissance" class="graph-container">
+                    </div>
+                        `);
+                                document.getElementById("occasionNeufFilter").addEventListener('change', function (event) {
+                                    console.log('works');
+
+                                    // Récupérer le fichier à partir de l'input file
+                                    const fileInput = document.getElementById("csvFileInputImm");
+                                    const file = fileInput.files[0];
+
+                                    // Vérifier si un fichier est sélectionné
+                                    if (file) {
+                                        const reader = new FileReader();
+
+                                        // Fonction appelée lorsque la lecture du fichier est terminée
+                                        reader.onload = function (e) {
+                                            const content = e.target.result;
+
+                                            // Appeler les fonctions de visualisation avec le contenu du fichier
+                                            visualizeImmatriculationPuissanceData(content);
+                                            visualizeImmatriculationData(content);
+                                        };
+
+                                        // Lire le contenu du fichier en tant que texte
+                                        reader.readAsText(file);
+                                    } else {
+                                        console.error("Aucun fichier sélectionné.");
+                                    }
+                                })
+                                visualizeImmatriculationPuissanceData(content);
+                                visualizeImmatriculationData(content);
+                            };
+
+                            reader.readAsText(file);
+                        });
+                    }
+                });
+            });
+
+            document.querySelector('a[href="#catalogue"]').click();
+        });
+
+        
+        // Function to clear and replace content inside a container
+        function clearAndReplaceContent(containerId, newContent) {
+            const container = document.getElementById(containerId);
+            console.log(container)
+            if (container) {
+                container.innerHTML = ''; // Clear existing content
+                container.innerHTML = newContent; // Replace with new content
+            }
+        }
+
+        // Obtenez l'élément input de fichier
+        const fileInputCat = document.getElementById('csvFileInputCat');
+        const fileInputCli = document.getElementById('csvFileInputCli');
+
+        
+    </script>
+</body>
+</html>

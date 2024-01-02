@@ -1,0 +1,86 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Installation et activation des différents package 
+
+```{r}
+install.packages("cluster")
+install.packages("ggplot2")
+install.packages("fpc")
+
+library(cluster)
+library(ggplot2)
+library(fpc)
+library(ggpubr)
+library(factoextra)
+```
+
+
+# Importation des csv
+
+On import les csv Client19 et Immatriculations : 
+
+```{r}
+clients <- read.csv("Clients_14_Type_Cleaned.csv",  header = TRUE, sep = ",", dec = ".", stringsAsFactors = T)
+immatriculations <- read.csv("Immatriculations.csv",  header = TRUE, sep = ",", dec = ".", stringsAsFactors = T)
+
+```
+
+On creer une matrice qui fusionne les données (on prend que les 10milles premieres lignes pour soucis 
+d'efficacité et de performance) : 
+```{r}
+donnees_fusionnees <- merge(clients, immatriculations, by="immatriculation")
+donnees_fusionnees <- head(donnees_fusionnees, 10000)
+
+```
+
+On nettoie les données : 
+```{r}
+# Nettoyage
+donnees_fusionnees$age <- as.numeric(donnees_fusionnees$age)
+donnees_fusionnees <- na.omit(donnees_fusionnees)
+```
+
+On eneleve les colonnes qui ne sont pas "interessantes" dans notre analyse
+```{r}
+# Supprimer les colonnes non pertinentes
+donnees_fusionnees <- subset(donnees_fusionnees, select = -c(immatriculation, sexe, taux, marque, nom, couleur, occasion, X2eme.voiture))
+```
+
+
+Information sur la nouvelle matrice : 
+```{r}
+# Information résumé de l'ensemble de données
+str(donnees_fusionnees)
+summary(donnees_fusionnees)
+```
+
+# Creation de la matrice de distance
+On creer la matrice de distance : 
+```{r}
+dmatrix <- daisy(donnees_fusionnees)
+```
+
+```{r}
+# Résumé de la matrice
+summary(dmatrix)
+```
+
+# Clustering avec l'approche K-means
+
+```{r}
+km4 <- kmeans(dmatrix, 4)
+#table(km4$cluster, donnees_fusionnees$age)
+donnees_fusionnees$nbEnfantsAchargeCat <- factor(as.factor(donnees_fusionnees$nbEnfantsAcharge), ordered=TRUE)
+qplot(km4$cluster, data=donnees_fusionnees, fill=nbEnfantsAchargeCat)
+```
+# On affecte à chaque cluster une categorie de voiture
+
+```{r}
+
+```
+
+
+

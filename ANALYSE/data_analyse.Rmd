@@ -1,0 +1,302 @@
+---
+title: "BDA-LD"
+author: "Benjamin Bernaud"
+date: "2023-11-27"
+output: pdf_document
+---
+
+Notes : On part d'une architecture similaire au dossier vagrant. Il faut définir le chemin du dossier userscripts Le dossier BDA-LD doit contenir un dossier data qui contient les fichiers CSV
+
+```{r}
+setwd("C:/Users/Berna/Documents/BDA-LD/userscripts")
+```
+
+# BDA-LD - Partie Analyse de données
+
+### Chargement des librairies
+
+```{r}
+install.packages("fpc", repos = "http://cran.us.r-project.org")
+install.packages("regclass", repos = "http://cran.us.r-project.org")
+install.packages("rpart.plot", repos = "http://cran.us.r-project.org")
+install.packages("C50", repos = "http://cran.us.r-project.org")
+install.packages("tree", repos = "http://cran.us.r-project.org")
+
+library(tidyverse)
+library(regclass)
+library(cluster)
+library(ggplot2)
+library(fpc)
+library(dplyr)
+library(rpart.plot)
+library(C50)
+library(tree)
+```
+
+## 1) Analyse exploratoire des données :
+
+L'analyse exploratoire des données vous permettra d'identifier d'éventuels problèmes dans les données (valeurs incohérentes, codage des valeurs manquantes, etc.) et découvrir d'éventuelles propriétés de l'espace des données (valeurs doublons, variables liées, variables d'importance particulière ou bien inutiles, etc.). Appliquez pour cela les différentes méthodes d'analyse exploratoire des données vues en cours (statistiques descriptives, histogrammes, nuages de points, boîtes à moustaches, etc.).
+
+### Chargement des données
+
+```{r}
+catalogue <- read.csv("../files/Catalogue.csv", header = TRUE, sep = ",", dec = ".", stringsAsFactors = T)
+head(catalogue)
+```
+
+#### Catalogue
+
+```{r}
+str(catalogue)
+```
+
+```{r}
+summary(catalogue)
+```
+
+Statistiques descriptives pour une colonne spécifique, par exemple, 'puissance'
+
+```{r}
+summary(catalogue$puissance)
+```
+
+```{r}
+hist(catalogue$puissance, main="Histogramme de la puissance", xlab="Puissance")
+```
+
+Comparaison entre puissance et prix
+
+```{r}
+plot(catalogue$puissance, catalogue$prix, main="Comparaison entre puissance et prix", xlab="Puissance", ylab="Prix")
+```
+
+Prix en fonction du statut occasion
+
+```{r}
+boxplot(catalogue$prix ~ catalogue$occasion, main="Boîte à moustaches pour le prix en fonction de l'occasion", xlab="Occasion", ylab="Prix")
+```
+
+On vérifie si il y a des données manquantes
+
+```{r}
+sum(is.na(catalogue))
+```
+
+On vérifie si il y a des lignes en double
+
+```{r}
+doublons <- duplicated(catalogue)
+
+catalogue[doublons, ]
+```
+
+Recherche de données liées :
+
+```{r}
+matrice_cor <- cor(catalogue[, sapply(catalogue, is.numeric)])
+
+print(matrice_cor)
+```
+
+La puissance et le prix ont l'air assez liés !
+
+## 2) Identification des catégories de véhicules :
+
+Vous devez à partir des informations du Catalogue identifier des catégories de véhicules (citadine, routière, sportive, etc.) en fonction de leur taille, puissance, prix, etc. Ces catégories doivent correspondre à divers besoins de la part des clients (une grande voiture pour les familles nombreuses, une petite voiture pour circuler en ville, etc.). Ces catégories de véhicules constitueront les classes à prédire durant les étapes suivantes du processus.
+
+Premièrement on définit des critères d'identification : - Puissance : Utiliser la puissance du véhicule pour distinguer entre des catégories telles que citadine, routière, sportive, etc. - Taille : Utiliser la longueur du véhicule pour également contribuer à la classification. Les citadines ont tendances a être plus courtes que les routières par exemple. - Prix : Utiliser la fourchette de prix pour distinguer entre des catégories de véhicules plus abordables ou haut de gamme.
+
+Pour définir les seuils de classification, on part du principe que l'ensemble proposé est homogène et représentatif. Ainsi on peut se baser sur ces données pour définir différentes classes.
+
+Différentes classes de puissances
+
+```{r}
+summary(catalogue$puissance)
+```
+
+Différentes classes de tailles
+
+```{r}
+summary(catalogue$longueur)
+```
+
+Différentes classes de prix
+
+```{r}
+summary(catalogue$prix)
+```
+
+```{r}
+# On définit les seuils en fonction des stats affichées juste au dessus
+seuil_puissance <- c(0, 100, 170, Inf)
+seuil_prix <- c(0, 16000, 30000, Inf) 
+
+# Assigner les catégories en fonction des seuils
+catalogue$puissance_class <- cut(catalogue$puissance, breaks = seuil_puissance, labels = c("Puissance faible", "Puissance moyenne", "Puissance élevée"))
+catalogue$prix_class <- cut(catalogue$prix, breaks = seuil_prix, labels = c("Prix faible", "Prix moyen", "Prix élevé"))
+
+head(catalogue, 20)
+```
+
+```{r}
+# Tableau croisé entre la catégorie de puissance et la catégorie de taille
+table_croisee <- table(catalogue$puissance_class, catalogue$longueur)
+print(table_croisee)
+
+# Diagramme en barres pour visualiser la répartition des catégories de prix
+barplot(table(catalogue$prix_class), main="Répartition des catégories de prix", xlab="Catégorie de Prix", ylab="Fréquence")
+
+```
+
+Finalement, grâce a ces classifications, on pourrait affecter une classe à chacun des véhicules :
+
+```{r}
+catalogue$classe <- NA
+
+catalogue <- catalogue %>%
+  mutate(classe = case_when(
+    puissance_class == "Puissance élevée" & longueur != "Courte" ~ "Routière",
+    puissance_class == "Puissance élevée" & longueur == "Courte" & prix_class == "Prix élevé" ~ "Sportive",
+    puissance_class == "Puissance moyenne" & longueur == "Courte" & prix_class == "Prix élevé" ~ "Sportive",
+    puissance_class == "Puissance moyenne" & longueur == "Courte" & prix_class != "Prix élevé" ~ "Citadine",
+    puissance_class == "Puissance moyenne" & longueur != "Courte" ~ "Routière",
+    puissance_class == "Puissance faible" ~ "Citadine",
+    TRUE ~ "?"
+  ))
+
+head(catalogue, 25)
+```
+
+## 3) Application des catégories de véhicules définies aux données des Immatriculations :
+
+Les données d'Immatriculations contiennent les informations sur les véhicules vendus cette année. L'objectif est d'attribuer à chacun de ces véhicules la catégorie qui lui correspond en utilisant le modèle définissant les catégories de véhicules généré précédemment.
+
+```{r}
+immatriculations <- read.csv("../files/Immatriculations.csv", header = TRUE, sep = ",", dec = ".", stringsAsFactors = T)
+head(immatriculations)
+```
+
+```{r}
+
+immatriculations$puissance_class <- cut(immatriculations$puissance, breaks = seuil_puissance, labels = c("Puissance faible", "Puissance moyenne", "Puissance élevée"))
+immatriculations$prix_class <- cut(immatriculations$prix, breaks = seuil_prix, labels = c("Prix faible", "Prix moyen", "Prix élevé"))
+
+immatriculations$classe <- NA
+
+immatriculations <- immatriculations %>%
+  mutate(classe = case_when(
+    puissance_class == "Puissance élevée" & longueur != "Courte" ~ "Routière",
+    puissance_class == "Puissance élevée" & longueur == "Courte" & prix_class == "Prix élevé" ~ "Sportive",
+    puissance_class == "Puissance moyenne" & longueur == "Courte" & prix_class == "Prix élevé" ~ "Sportive",
+    puissance_class == "Puissance moyenne" & longueur == "Courte" & prix_class != "Prix élevé" ~ "Citadine",
+    puissance_class == "Puissance moyenne" & longueur != "Courte" ~ "Routière",
+    puissance_class == "Puissance faible" ~ "Citadine",
+    TRUE ~ "?"
+  ))
+
+head(immatriculations, 25)
+
+```
+
+## 4) Fusion des données Clients et Immatriculations :
+
+Les données Clients contiennent les informations sur les clients ayant les véhicules vendus cette année. L'objectif est de faire la fusion entre les données des Clients et des Immatriculations afin d'obtenir sur une même ligne l'ensemble des informations sur le client (âge, sexe, etc.) et sur le véhicule qu'il a acheté (avec sa catégorie). Cet ensemble de données servira lors des étapes suivantes pour l'apprentissage de la catégorie de véhicules (variable cible) la plus adaptée à un client selon ses caractéristiques (variables prédictives).
+
+```{r}
+# On récuppère les 2 fichiers clients
+clients_14 <- read.csv("../files/Clients_14.csv", header = TRUE, sep = ",", dec = ".", stringsAsFactors = T)
+clients_19 <- read.csv("../files/Clients_19.csv", header = TRUE, sep = ",", dec = ".", stringsAsFactors = T)
+
+# On combine les 2 pour avoir une variable qui contient l'entièreté des clients
+clients <- bind_rows(clients_14, clients_19)
+
+head(clients)
+```
+
+On Vérifie les valeurs dupliquées dans la colonne d'immatriculation
+
+```{r}
+clients[duplicated(clients$immatriculation), "immatriculation"]
+```
+
+On voit que le fichier clients contient des erreurs. [**On a plusieurs enregistrements pour la même immatriculation !**]{.underline} On va donc les supprimer pour n'en garder qu'un seul.
+
+```{r}
+clients_unique <- distinct(clients, immatriculation, .keep_all = TRUE)
+head(clients_unique, 25)
+```
+
+On fait une jointure entre les immatriculations et les clients, en se basant sur le champ immatriculation.
+```{r}
+donnees_clients <- left_join(immatriculations, clients_unique, by = "immatriculation")
+
+tail(donnees_clients, 25)
+```
+
+## 5) Création d'un modèle de classification supervisée pour la prédiction de la catégorie de véhicules :
+
+L'objectif de cette étape est de créer à partir du résultat de la fusion précédente un classifieur (modèle de classification supervisée) permettant d'associer aux caractéristiques des clients (âge, sexe, etc.) une catégorie de véhicules. Testez les différentes approches et algorithmes (arbres de décision, random forests, support vector machines, réseaux de neurones, deep learning, etc.), avec pour chaque algorithme plusieurs paramétrages testés, afin d'obtenir un classifieur aussi performent que possible. L'évaluation et la comparaison des performances de chaque configuration algorithmique (un algorithme et un paramétrage spécifiques) testée sera réalisée grâce aux matrices de confusion et mesures d'évaluation calculées à partir des résultats des tests des classifieurs.
+
+
+```{r}
+data <- na.omit(donnees_clients)
+sum(is.na(data))
+data$situationFamiliale <- iconv(data$situationFamiliale, to = "UTF-8", sub = "byte")
+head(data)
+data_train <- data[1:10000,]
+data_test <- data[10001:200000,]
+```
+
+```{r}
+tree1 <- rpart(classe ~ age + sexe + taux + situationFamiliale + nbEnfantsAcharge + X2eme.voiture, data_train) 
+prp(tree1)
+```
+
+```{r}
+test_tree1 <- predict(tree1, data_test, type="class") 
+table(test_tree1)
+data_test$Tree1 <- test_tree1 
+```
+
+```{r}
+taux_succes1 <- nrow(data_test[data_test$classe==data_test$Tree1,]) / nrow(data_test) 
+taux_succes1
+head(data_test, 30)
+```
+
+```{r}
+#tree2 <- C5.0(classe ~ ., data, control = C5.0Control(minCases = 5, winnow=F, CF=F))
+#plot(tree2, type="simple")
+```
+
+
+```{r}
+#tree3 <- tree(classe ~ ., data)
+```
+```{r}
+#plot(tree3)
+#text(tree3, pretty=0)
+```
+
+
+## 6) Application du modèle de prédiction aux données Marketing :
+
+Les données Marketing contiennent les informations sur les clients pour lesquels on souhaite prédire une catégorie de véhicules. L'objectif est de prédire pour chacun de ces clients la catégorie de véhicules qui lui correspond le mieux en utilisant le classifieur généré durant l'étape précédente.
+
+
+```{r}
+marketing <- read.csv("../files/Marketing.csv", header = TRUE, sep = ",", dec = ".", stringsAsFactors = T)
+marketing$situationFamiliale <- iconv(marketing$situationFamiliale, to = "UTF-8", sub = "byte")
+
+head(marketing)
+marketing$age <- as.factor(marketing$age)
+marketing$taux <- as.factor(marketing$taux)
+marketing$nbEnfantsAcharge <- as.factor(marketing$nbEnfantsAcharge)
+```
+
+```{r}
+class_treeN <- predict(tree1, marketing, type="class")
+table(class_treeN)
+marketing$Prediction <- class_treeN
+marketing
+```
