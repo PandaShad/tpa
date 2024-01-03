@@ -9,10 +9,10 @@ for process in "${processes[@]}"; do
         echo "$process n'est pas en cours d'exécution. Lancement du script approprié..."
         case "$process" in
             "NodeManager" | "DataNode" | "SecondaryNameNode")
-                start-dfs.sh
+                /usr/local/hadoop/sbin/start-dfs.sh
                 ;;
             "ResourceManager" | "NameNode")
-                start-yarn.sh
+                /usr/local/hadoop/sbin/start-yarn.sh
                 ;;
         esac
     else
@@ -30,15 +30,15 @@ hadoop fs -put -f /vagrant/DataCSV/Immatriculations.csv /user/data
 hadoop fs -put -f /vagrant/DataCSV/Marketing.csv /user/data
 
 # Lancement du script hive
-chmod u+x *.hql
+# chmod u+x *.hql
 
-echo "Suppression des bases Hive"
-hive -f delete_bases.hql
+# echo "Suppression des bases Hive"
+# hive -f delete_bases.hql
 
-echo "Création des bases Hive"
-hive -f create_bases.hql
+# echo "Création des bases Hive"
+# hive -f create_bases.hql
 
-echo "Ajout des fichiers dans les bases Hive"
-hive -f populate_bases.hql
+# echo "Ajout des fichiers dans les bases Hive"
+# hive -f populate_bases.hql
 
-echo "ALL DONE"
+# echo "ALL DONE"
