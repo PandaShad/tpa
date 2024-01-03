@@ -22,12 +22,12 @@ done
 
 # Les fichiers doivent être placés dans un dossier DataCSV
 echo "Ajout des fichiers locaux dans HDFS"
-hadoop fs -put -f /vagrant/DataCSV/Catalogue.csv /user/data
-hadoop fs -put -f /vagrant/DataCSV/Clients_14.csv /user/data
-hadoop fs -put -f /vagrant/DataCSV/Clients_19.csv /user/data
-hadoop fs -put -f /vagrant/DataCSV/CO2.csv /user/data
-hadoop fs -put -f /vagrant/DataCSV/Immatriculations.csv /user/data
-hadoop fs -put -f /vagrant/DataCSV/Marketing.csv /user/data
+hadoop fs -put -f /root/tpa/tpa/DATABASE/data/Catalogue.csv /user/data
+hadoop fs -put -f /root/tpa/tpa/DATABASE/data/Clients_14.csv /user/data
+hadoop fs -put -f /root/tpa/tpa/DATABASE/data/Clients_19.csv /user/data
+hadoop fs -put -f /root/tpa/tpa/DATABASE/data/CO2.csv /user/data
+hadoop fs -put -f /root/tpa/tpa/DATABASE/data/Immatriculations.csv /user/data
+hadoop fs -put -f /root/tpa/tpa/DATABASE/data/Marketing.csv /user/data
 
 # Lancement du script hive
 # chmod u+x *.hql
