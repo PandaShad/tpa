@@ -30,15 +30,15 @@ hadoop fs -put -f /root/tpa/tpa/DATABASE/data/Immatriculations.csv /root/tpa/tpa
 hadoop fs -put -f /root/tpa/tpa/DATABASE/data/Marketing.csv /root/tpa/tpa/DATABASE/data
 
 # Lancement du script hive
-# chmod u+x *.hql
+chmod u+x *.hql
 
-# echo "Suppression des bases Hive"
-# hive -f delete_bases.hql
+echo "Suppression des bases Hive"
+hive -f delete_bases.hql
 
-# echo "Création des bases Hive"
-# hive -f create_bases.hql
+echo "Création des bases Hive"
+hive -f create_bases.hql
 
-# echo "Ajout des fichiers dans les bases Hive"
-# hive -f populate_bases.hql
+echo "Ajout des fichiers dans les bases Hive"
+hive -f populate_bases.hql
 
-# echo "ALL DONE"
+echo "ALL DONE"
