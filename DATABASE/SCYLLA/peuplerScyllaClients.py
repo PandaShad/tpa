@@ -38,8 +38,8 @@ def create_table_if_not_exists(session, keyspace, table_name):
     print(f"Table {keyspace}.{table_name} created.")
 
 def process_data(df):
-    df = df.applymap(nan_to_none)
-    df = df.applymap(lambda val: None if pd.isna(val) else val)
+    df = df.map(nan_to_none)
+    df = df.map(lambda val: None if pd.isna(val) else val)
     df['age'] = pd.to_numeric(df['age'], errors='coerce').fillna(0).astype(int)
     df['taux'] = pd.to_numeric(df['taux'], errors='coerce').fillna(0).astype(int)
     df['nbEnfantsAcharge'] = pd.to_numeric(df['nbEnfantsAcharge'], errors='coerce').fillna(0).astype(int)

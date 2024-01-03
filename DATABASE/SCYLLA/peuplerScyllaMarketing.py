@@ -36,7 +36,7 @@ def create_marketing_table(session, keyspace):
     print(f"Table {keyspace}.marketing created.")
 
 def process_marketing_data(df):
-    df = df.applymap(nan_to_none)
+    df = df.map(nan_to_none)
     df['age'] = pd.to_numeric(df['age'], errors='coerce').fillna(0).astype(int)
     df['taux'] = pd.to_numeric(df['taux'], errors='coerce').fillna(0).astype(int)
     df['nbEnfantsAcharge'] = pd.to_numeric(df['nbEnfantsAcharge'], errors='coerce').fillna(0).astype(int)

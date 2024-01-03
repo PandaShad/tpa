@@ -40,7 +40,7 @@ def create_immatriculations_table(session, keyspace):
     print(f"Table {keyspace}.immatriculations created.")
 
 def process_immatriculations_data(df):
-    df = df.applymap(nan_to_none)
+    df = df.map(nan_to_none)
     df['puissance'] = pd.to_numeric(df['puissance'], errors='coerce').fillna(0).astype(int)
     df['nbPlaces'] = pd.to_numeric(df['nbPlaces'], errors='coerce').fillna(0).astype(int)
     df['nbPortes'] = pd.to_numeric(df['nbPortes'], errors='coerce').fillna(0).astype(int)
