@@ -55,7 +55,12 @@ def import_catalogue_to_scylladb(csv_file_path, keyspace, node_address, username
         print("Connecting to ScyllaDB cluster...")
         auth_provider = PlainTextAuthProvider(username=username, password=password)
         cluster = Cluster([node_address], auth_provider=auth_provider)
-        session = cluster.connect(keyspace)
+        session = cluster.connect()
+
+        keyspace_query = f"CREATE KEYSPACE IF NOT EXISTS {keyspace} WITH replication = {{'class': 'SimpleStrategy', 'replication_factor': 1}}"
+        session.execute(keyspace_query)
+
+        session.set_keyspace(keyspace)
 
         create_catalogue_table(session, keyspace)
 
