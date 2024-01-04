@@ -1,0 +1,13 @@
+----------------------------------------------------------------
+Thu Jan 04 21:57:51 UTC 2024:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.14.2.0 - (1828579): instance a816c00e-018c-d67b-9066-000013013840 
+on database directory /root/tpa/tpa/MAP_REDUCE/metastore_db with class loader sun.misc.Launcher$AppClassLoader@28a418fc 
+Loaded from file:/opt/spark/jars/derby-10.14.2.0.jar
+java.vendor=Private Build
+java.runtime.version=1.8.0_392-8u392-ga-1~22.04-b08
+user.dir=/root/tpa/tpa/MAP_REDUCE
+os.name=Linux
+os.arch=amd64
+os.version=5.15.0-91-generic
+derby.system.home=null
+Database Class Loader started - derby.database.classpath=''
